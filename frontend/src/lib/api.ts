@@ -8,8 +8,7 @@
 
 import { ApiRequest } from "../types";
 
-export const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+export const API = process.env.NEXT_PUBLIC_API_URL || "";
 export const SESSION_KEY = "lms-session";
 
 // The API client owns authentication headers and error normalization so feature components
