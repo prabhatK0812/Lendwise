@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  authController.ts — Authentication HTTP handlers
+ *
+ *  Thin request/response layer that delegates business logic
+ *  to authService. Exposes signup, login, and identity (me)
+ *  endpoints. Signup is restricted to the Borrower role.
+ * ────────────────────────────────────────────────────────────── */
+
 import { Request, Response } from "express";
 import { createBorrower, loginUser } from "../services/authService";
 import { AuthRequest } from "../middleware";

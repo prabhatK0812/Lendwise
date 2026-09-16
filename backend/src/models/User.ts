@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  User.ts — Mongoose schema for platform users
+ *
+ *  Six roles: Admin, Sales, Sanction, Disbursement, Collection,
+ *  and Borrower. Passwords are stored as bcrypt hashes. Email
+ *  is unique and lowercased. Timestamps track account creation.
+ * ────────────────────────────────────────────────────────────── */
+
 import mongoose, { Document, Schema } from "mongoose";
 
 export const ROLES = [

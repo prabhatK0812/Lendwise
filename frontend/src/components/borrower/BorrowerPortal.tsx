@@ -1,12 +1,31 @@
+/* ──────────────────────────────────────────────────────────────
+ *  BorrowerPortal.tsx — Multi-step loan application workflow
+ *
+ *  Manages the complete borrower journey: personal details,
+ *  BRE eligibility check, salary slip upload, loan configuration,
+ *  review, and submission. After submission, shows the My Loans
+ *  dashboard with visual status timelines and payment progress.
+ * ────────────────────────────────────────────────────────────── */
+
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { API } from "../../lib/api";
 import { ApiRequest, BorrowerForm, Loan, User } from "../../types";
 import { AppShell } from "../AppShell";
+import { StatusTimeline } from "./StatusTimeline";
+import { toast } from "../Toast";
 
 const money = (value: number) =>
   `INR ${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+
+const statusTone: Record<string, string> = {
+  APPLIED: "pending",
+  SANCTIONED: "sanctioned",
+  DISBURSED: "disbursed",
+  CLOSED: "closed",
+  REJECTED: "rejected",
+};
 
 // BorrowerPortal owns only the borrower journey: profile, BRE, document, configuration, and apply.
 export function BorrowerPortal({
@@ -25,6 +44,8 @@ export function BorrowerPortal({
   const [eligibility, setEligibility] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState<Loan | null>(null);
+  const [myLoans, setMyLoans] = useState<Loan[]>([]);
+  const [showMyLoans, setShowMyLoans] = useState(false);
   const [form, setForm] = useState<BorrowerForm>({
     fullName: user.name,
     pan: "",
@@ -40,6 +61,27 @@ export function BorrowerPortal({
     [form.amount, form.tenureDays],
   );
 
+  // Fetch borrower loans on mount; show the My Loans view when at least one exists.
+  useEffect(() => {
+    request("/loans/mine")
+      .then((data) => {
+        if (data.loans?.length > 0) {
+          setMyLoans(data.loans);
+          setShowMyLoans(true);
+        }
+      })
+      .catch(() => { });
+  }, [request]);
+
+  function refreshMyLoans() {
+    request("/loans/mine")
+      .then((data) => {
+        setMyLoans(data.loans || []);
+        setShowMyLoans(true);
+      })
+      .catch(() => { });
+  }
+
   async function checkEligibility() {
     setNotice("");
     try {
@@ -48,9 +90,13 @@ export function BorrowerPortal({
         body: JSON.stringify(form),
       });
       setEligibility(data.errors || []);
-      if (data.eligible) setStep(3);
+      if (data.eligible) {
+        setStep(3);
+        toast("Eligibility verified! You're good to go.");
+      }
     } catch (error) {
       setNotice((error as Error).message);
+      toast((error as Error).message, "error");
     }
   }
 
@@ -74,9 +120,150 @@ export function BorrowerPortal({
       if (!response.ok) throw new Error(data.message);
       setSubmitted(data.loan);
       setStep(6);
+      toast("Application submitted successfully!");
     } catch (error) {
       setNotice((error as Error).message);
+      toast((error as Error).message, "error");
     }
+  }
+
+  // A borrower cannot apply for a new loan while an active one exists.
+  const hasActiveLoan = myLoans.some((loan) =>
+    ["APPLIED", "SANCTIONED", "DISBURSED"].includes(loan.status),
+  );
+
+  if (showMyLoans) {
+    return (
+      <AppShell user={user} onLogout={onLogout}>
+        <section className="workspace">
+          <div className="page-heading">
+            <div>
+              <p className="kicker">Borrower portal</p>
+              <h1>Your loan applications</h1>
+              <p className="muted">
+                Track the progress of your loans in real time.
+              </p>
+            </div>
+            <button
+              className="primary"
+              disabled={hasActiveLoan}
+              title={
+                hasActiveLoan
+                  ? "You already have an active loan. Wait until it's closed or rejected."
+                  : ""
+              }
+              onClick={() => {
+                if (hasActiveLoan) return;
+                setShowMyLoans(false);
+                setStep(1);
+                setSubmitted(null);
+                setFile(null);
+                setNotice("");
+                setEligibility([]);
+                toast("Starting new application", "info");
+              }}
+            >
+              {hasActiveLoan
+                ? "Active loan in progress"
+                : "New application"}{" "}
+              <span>{hasActiveLoan ? "⏳" : "+"}</span>
+            </button>
+          </div>
+          {hasActiveLoan && (
+            <div className="alert error" style={{ marginTop: -20, marginBottom: 24 }}>
+              You already have an active loan (APPLIED / SANCTIONED / DISBURSED). You can apply for a new loan only after your current loan is <strong>closed</strong> or <strong>rejected</strong>.
+            </div>
+          )}
+          {myLoans.map((loan) => {
+            const paid = (loan.payments || []).reduce(
+              (sum, p) => sum + p.amount,
+              0,
+            );
+            const progress = loan.totalRepayment
+              ? Math.min(
+                100,
+                Math.round((paid / loan.totalRepayment) * 100),
+              )
+              : 0;
+            return (
+              <div className="my-loan-card" key={loan._id}>
+                <div className="my-loan-header">
+                  <div>
+                    <span className="step-label">Loan application</span>
+                    <h3>{money(loan.amount)}</h3>
+                  </div>
+                  <span
+                    className={`status ${statusTone[loan.status] || ""}`}
+                  >
+                    {loan.status}
+                  </span>
+                </div>
+                <div className="my-loan-details">
+                  <div>
+                    <small>Principal</small>
+                    <strong>{money(loan.amount)}</strong>
+                  </div>
+                  <div>
+                    <small>Interest (12% p.a.)</small>
+                    <strong>{money(loan.simpleInterest)}</strong>
+                  </div>
+                  <div>
+                    <small>Total repayment</small>
+                    <strong>{money(loan.totalRepayment)}</strong>
+                  </div>
+                  <div>
+                    <small>Tenure</small>
+                    <strong>{loan.tenureDays} days</strong>
+                  </div>
+                </div>
+                {loan.salarySlip && (
+                  <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>📄 Attached Document:</span>
+                    <a
+                      className="document-link"
+                      href={
+                        loan.salarySlip.secureUrl && loan.salarySlip.secureUrl.startsWith("http")
+                          ? loan.salarySlip.secureUrl
+                          : `${API}/loans/${loan._id}/document?token=${encodeURIComponent(token)}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {loan.salarySlip.filename || "View uploaded salary slip"} ↗
+                    </a>
+                  </div>
+                )}
+                {(loan.status === "DISBURSED" ||
+                  loan.status === "CLOSED") && (
+                    <div className="payment-progress">
+                      <div className="payment-progress-header">
+                        <span>Repayment progress</span>
+                        <strong>{progress}%</strong>
+                      </div>
+                      <div className="payment-progress-bar">
+                        <div
+                          className="payment-progress-fill"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <div className="payment-progress-footer">
+                        {money(paid)} of {money(loan.totalRepayment)} paid
+                      </div>
+                    </div>
+                  )}
+                <StatusTimeline
+                  status={loan.status}
+                  rejectionReason={loan.rejectionReason}
+                  createdAt={loan.createdAt}
+                  updatedAt={loan.updatedAt}
+                  disbursedAt={loan.disbursedAt}
+                />
+              </div>
+            );
+          })}
+        </section>
+      </AppShell>
+    );
   }
 
   return (
@@ -112,15 +299,30 @@ export function BorrowerPortal({
           {step === 1 && (
             <ProfileStep
               form={form}
-              setForm={setForm}
-              onNext={() => setStep(2)}
+              setForm={(updated) => {
+                setForm(updated);
+                setEligibility([]);
+                setNotice("");
+              }}
+              onBack={
+                myLoans.length > 0 ? () => setShowMyLoans(true) : undefined
+              }
+              onNext={() => {
+                setEligibility([]);
+                setNotice("");
+                setStep(2);
+              }}
             />
           )}
           {step === 2 && (
             <EligibilityStep
               errors={eligibility}
               notice={notice}
-              onBack={() => setStep(1)}
+              onBack={() => {
+                setEligibility([]);
+                setNotice("");
+                setStep(1);
+              }}
               onNext={checkEligibility}
             />
           )}
@@ -152,7 +354,9 @@ export function BorrowerPortal({
               onConfirm={() => submitLoan()}
             />
           )}
-          {step === 6 && <SuccessStep loan={submitted} />}
+          {step === 6 && (
+            <SuccessStep loan={submitted} onViewLoans={refreshMyLoans} />
+          )}
         </div>
       </section>
     </AppShell>
@@ -162,10 +366,12 @@ export function BorrowerPortal({
 function ProfileStep({
   form,
   setForm,
+  onBack,
   onNext,
 }: {
   form: BorrowerForm;
   setForm: (form: BorrowerForm) => void;
+  onBack?: () => void;
   onNext: () => void;
 }) {
   return (
@@ -233,6 +439,11 @@ function ProfileStep({
         </label>
       </div>
       <div className="actions">
+        {onBack && (
+          <button type="button" className="secondary" onClick={onBack}>
+            Back
+          </button>
+        )}
         <button
           className="primary"
           onClick={onNext}
@@ -322,6 +533,13 @@ function DocumentStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  /** Open the uploaded file in a new tab for preview. */
+  function previewFile() {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    window.open(url, "_blank");
+  }
+
   return (
     <div className="form-step">
       <div className="step-intro">
@@ -329,16 +547,57 @@ function DocumentStep({
         <h2>One last document, then your offer.</h2>
         <p>Upload a recent salary slip so our team can verify your income.</p>
       </div>
-      <label className="upload-zone">
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(event) => setFile(event.target.files?.[0] || null)}
-        />
-        <span className="upload-icon">↑</span>
-        <strong>{file ? file.name : "Drop your salary slip here"}</strong>
-        <small>PDF, JPG or PNG · max 5 MB</small>
-      </label>
+
+      {/* ── Upload zone (shown when no file is selected) ── */}
+      {!file && (
+        <label className="upload-zone">
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(event) => {
+              const selected = event.target.files?.[0] || null;
+              if (selected && selected.size > 5 * 1024 * 1024) {
+                toast("File exceeds 5 MB limit", "error");
+                return;
+              }
+              setFile(selected);
+              if (selected) toast(`Uploaded: ${selected.name}`);
+            }}
+          />
+          <span className="upload-icon">↑</span>
+          <strong>Drop your salary slip here</strong>
+          <small>PDF, JPG or PNG · max 5 MB</small>
+        </label>
+      )}
+
+      {/* ── File preview card (shown after upload) ── */}
+      {file && (
+        <div className="uploaded-file-card">
+          <div className="uploaded-file-info">
+            <span className="uploaded-file-icon">
+              {file.type.includes("pdf") ? "📄" : "🖼️"}
+            </span>
+            <div>
+              <strong>{file.name}</strong>
+              <small>{(file.size / 1024).toFixed(1)} KB · {file.type.split("/")[1]?.toUpperCase()}</small>
+            </div>
+          </div>
+          <div className="uploaded-file-actions">
+            <button type="button" className="ghost small" onClick={previewFile}>
+              👁 View
+            </button>
+            <button
+              type="button"
+              className="ghost small"
+              style={{ color: "#d73a3a" }}
+              onClick={() => setFile(null)}
+            >
+              ✕ Remove
+            </button>
+          </div>
+        </div>
+      )}
+
       {notice && <div className="alert error">{notice}</div>}
       <div className="actions">
         <button type="button" className="secondary" onClick={onBack}>
@@ -498,7 +757,13 @@ function ReviewItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SuccessStep({ loan }: { loan: Loan | null }) {
+function SuccessStep({
+  loan,
+  onViewLoans,
+}: {
+  loan: Loan | null;
+  onViewLoans: () => void;
+}) {
   return (
     <div className="success-step">
       <div className="success-mark">✓</div>
@@ -509,21 +774,32 @@ function SuccessStep({ loan }: { loan: Loan | null }) {
         shortly.
       </p>
       {loan && (
-        <div className="summary-grid">
-          <div>
-            <small>Requested amount</small>
-            <strong>{money(loan.amount)}</strong>
+        <>
+          <div className="summary-grid">
+            <div>
+              <small>Requested amount</small>
+              <strong>{money(loan.amount)}</strong>
+            </div>
+            <div>
+              <small>Repayment amount</small>
+              <strong>{money(loan.totalRepayment)}</strong>
+            </div>
+            <div>
+              <small>Status</small>
+              <strong className="status pending">APPLIED</strong>
+            </div>
           </div>
-          <div>
-            <small>Repayment amount</small>
-            <strong>{money(loan.totalRepayment)}</strong>
-          </div>
-          <div>
-            <small>Status</small>
-            <strong className="status pending">APPLIED</strong>
-          </div>
-        </div>
+          <StatusTimeline 
+            status="APPLIED" 
+            createdAt={loan.createdAt} 
+          />
+        </>
       )}
+      <div className="success-actions">
+        <button className="primary" onClick={onViewLoans}>
+          View my loans <span>→</span>
+        </button>
+      </div>
     </div>
   );
 }

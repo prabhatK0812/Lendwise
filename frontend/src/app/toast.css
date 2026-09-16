@@ -1,0 +1,118 @@
+/* ──────────────────────────────────────────────────────────────
+ *  toast.css — Toast notification styles
+ *
+ *  Fixed overlay in the top-right corner. Toasts slide in from
+ *  the right and auto-fade after 3.5 seconds. Three gradient
+ *  variants: success (green), error (red), info (blue).
+ * ────────────────────────────────────────────────────────────── */
+
+/* ── Container ─────────────────────────────────────────────── */
+
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* ── Individual Toast ──────────────────────────────────────── */
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+  max-width: 400px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  pointer-events: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15),
+              0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1),
+             toast-slide-out 0.35s ease-in 3.15s forwards;
+}
+
+/* ── Colour Variants ───────────────────────────────────────── */
+
+.toast-success {
+  background: linear-gradient(135deg,
+    rgba(36, 163, 105, 0.95),
+    rgba(32, 140, 90, 0.95));
+  color: #fff;
+}
+
+.toast-error {
+  background: linear-gradient(135deg,
+    rgba(215, 58, 58, 0.95),
+    rgba(185, 40, 40, 0.95));
+  color: #fff;
+}
+
+.toast-info {
+  background: linear-gradient(135deg,
+    rgba(43, 118, 197, 0.95),
+    rgba(35, 98, 168, 0.95));
+  color: #fff;
+}
+
+/* ── Icon Badge ────────────────────────────────────────────── */
+
+.toast-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ── Slide Animations ──────────────────────────────────────── */
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+}
+
+/* ── Mobile: toasts appear at bottom ───────────────────────── */
+
+@media (max-width: 480px) {
+  .toast-container {
+    top: auto;
+    bottom: 20px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .toast {
+    min-width: 0;
+    max-width: none;
+  }
+}

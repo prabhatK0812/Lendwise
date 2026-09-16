@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  loanController.ts — Loan lifecycle HTTP handlers
+ *
+ *  Maps REST endpoints to loanService operations: eligibility
+ *  check, loan creation (with BRE re-validation), borrower
+ *  queries, dashboard queries, status transitions, and payments.
+ * ────────────────────────────────────────────────────────────── */
+
 import { Response } from "express";
 import { AuthRequest } from "../middleware";
 import {
@@ -24,6 +32,18 @@ export async function create(req: AuthRequest, res: Response) {
         .json({ message: "Eligibility checks failed", errors });
     const termsError = validateLoanTerms(req.body.amount, req.body.tenureDays);
     if (termsError) return res.status(400).json({ message: termsError });
+
+    // Prevent multiple active loans — a borrower must close or get rejected first.
+    const activeLoans = await loanService.getBorrowerLoans(req.user!.id);
+    const hasActive = activeLoans.some((loan) =>
+      ["APPLIED", "SANCTIONED", "DISBURSED"].includes(loan.status),
+    );
+    if (hasActive)
+      return res.status(409).json({
+        message:
+          "You already have an active loan. Please wait until it is closed or rejected before applying again.",
+      });
+
     const loan = await loanService.createLoan(req.body, req.user!.id, req.file);
     return res
       .status(201)
@@ -92,4 +112,45 @@ export async function payment(req: AuthRequest, res: Response) {
       .status(400)
       .json({ message: "Payment exceeds the outstanding balance" });
   return res.status(201).json({ loan: result.loan });
+}
+
+export async function getDocument(req: AuthRequest, res: Response) {
+  try {
+    const loan = await loanService.getLoanById(String(req.params.id));
+    if (!loan || !loan.salarySlip) {
+      return res.status(404).json({ message: "Salary slip not found" });
+    }
+
+    // Role check: Borrowers can only view their own document; Ops/Admin can view any document
+    const borrowerId = String(
+      (loan.borrower as any)?._id || loan.borrower,
+    );
+    if (req.user!.role === "Borrower" && borrowerId !== req.user!.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // If Cloudinary URL exists, redirect to it
+    if (loan.salarySlip.storage === "cloudinary" && loan.salarySlip.secureUrl) {
+      return res.redirect(loan.salarySlip.secureUrl);
+    }
+
+    // If stored in MongoDB buffer, stream with correct Content-Type & disposition
+    if (loan.salarySlip.data) {
+      res.setHeader(
+        "Content-Type",
+        loan.salarySlip.mimeType || "application/pdf",
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="${loan.salarySlip.filename || "salary_slip.pdf"}"`,
+      );
+      return res.send(loan.salarySlip.data);
+    }
+
+    return res.status(404).json({ message: "Document data unavailable" });
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Failed to retrieve document" });
+  }
 }

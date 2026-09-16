@@ -9,3 +9,61 @@
 .document-link:hover {
   text-decoration: underline;
 }
+
+/* ── Uploaded File Preview Card ────────────────────────────── */
+
+.uploaded-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 650px;
+  padding: 18px 22px;
+  border: 1.5px solid #d4e4f1;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0f7ff, #f8fbff);
+  transition: border-color 0.2s;
+}
+
+.uploaded-file-card:hover {
+  border-color: var(--blue);
+}
+
+.uploaded-file-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.uploaded-file-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.uploaded-file-info div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.uploaded-file-info strong {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.uploaded-file-info small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.uploaded-file-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

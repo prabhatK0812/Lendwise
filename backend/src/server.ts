@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  server.ts — Express application bootstrap
+ *
+ *  Initialises the Express server with CORS, JSON body parsing,
+ *  route mounting, and a MongoDB connection via Mongoose. The
+ *  API starts only after the database connection is confirmed.
+ * ────────────────────────────────────────────────────────────── */
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -9,8 +17,11 @@ import { loanRouter } from "./routes/loanRoutes";
 // and the database models so they remain enforceable even when the frontend is bypassed.
 const app = express();
 
-// CORS is restricted to the configured frontend origin instead of allowing arbitrary websites.
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000" }));
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:3000";
+app.use(cors({
+  origin: [clientUrl, "http://localhost:3000"],
+  credentials: true,
+}));
 
 // JSON is limited to 2 MB because salary slips are uploaded through Multer, not JSON.
 app.use(express.json({ limit: "2mb" }));

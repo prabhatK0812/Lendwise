@@ -1,3 +1,12 @@
+/* ──────────────────────────────────────────────────────────────
+ *  middleware/index.ts — JWT authentication + role authorization
+ *
+ *  authenticate() verifies the Bearer token and attaches the
+ *  decoded payload (id, role, name, email) to req.user.
+ *  authorize(...roles) restricts access to specific roles,
+ *  returning 403 if the user's role is not in the allowed list.
+ * ────────────────────────────────────────────────────────────── */
+
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Role } from "../models/User";
@@ -12,7 +21,9 @@ export function authenticate(
   res: Response,
   next: NextFunction,
 ) {
-  const token = req.headers.authorization?.replace("Bearer ", "");
+  const token =
+    req.headers.authorization?.replace("Bearer ", "") ||
+    (req.query?.token as string | undefined);
   if (!token)
     return res.status(401).json({ message: "Authentication required" });
   try {

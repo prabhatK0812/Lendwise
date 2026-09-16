@@ -1,0 +1,356 @@
+/* ── Status Timeline ── */
+
+.status-timeline {
+  margin-top: 24px;
+  padding: 26px 24px 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 251, 0.95));
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 28px rgba(32, 50, 70, 0.05);
+}
+
+.tl-title {
+  display: block;
+  margin-bottom: 22px;
+  color: #8390a1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.tl-track {
+  display: flex;
+  align-items: flex-start;
+}
+
+.tl-node {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  animation: tl-enter 0.5s ease-out both;
+}
+
+.tl-node:nth-child(1) { animation-delay: 0.05s; }
+.tl-node:nth-child(2) { animation-delay: 0.15s; }
+.tl-node:nth-child(3) { animation-delay: 0.25s; }
+.tl-node:nth-child(4) { animation-delay: 0.35s; }
+
+/* Connector line between nodes */
+.tl-connector {
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: #e0e4ea;
+  z-index: 0;
+  transition: background 0.4s ease;
+}
+
+.tl-conn-done {
+  background: var(--green);
+}
+
+.tl-conn-active {
+  background: linear-gradient(90deg, var(--blue) 40%, #e0e4ea 100%);
+}
+
+/* Circle node */
+.tl-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tl-circle:hover {
+  transform: scale(1.08);
+}
+
+/* Node text */
+.tl-label {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.tl-desc {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Node States ── */
+
+/* Done (completed steps) */
+.tl-done .tl-circle {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(36, 163, 105, 0.25);
+}
+
+.tl-done .tl-label {
+  color: var(--green);
+}
+
+/* Active (current status — pulsing highlight) */
+.tl-active .tl-circle {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 0 0 6px rgba(43, 118, 197, 0.18);
+  animation: tl-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.tl-active .tl-label {
+  color: var(--blue);
+}
+
+/* Pending (future steps) */
+.tl-pending .tl-circle {
+  background: #e7ebef;
+  color: #9aa5b3;
+}
+
+.tl-pending .tl-label {
+  color: #9aa5b3;
+}
+
+.tl-pending .tl-desc {
+  color: #c4cad0;
+}
+
+/* ── Rejected Branch (red fork from Sanctioned node) ── */
+
+.tl-rejected-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  animation: tl-enter 0.4s ease-out 0.4s both;
+}
+
+.tl-branch-line {
+  width: 3px;
+  height: 20px;
+  background: linear-gradient(180deg, #e0e4ea, #e74c3c);
+  border-radius: 2px;
+}
+
+.tl-rejected-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tl-rejected-node .tl-circle {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  background: #e74c3c;
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(231, 76, 60, 0.15);
+  animation: tl-pulse-red 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.tl-rejected-node .tl-label {
+  color: #e74c3c;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.tl-reject-reason {
+  display: block;
+  max-width: 170px;
+  margin-top: 6px;
+  padding: 7px 10px;
+  background: #fff1f0;
+  border: 1px solid #ffd4d0;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #a9443f;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* ── Animations ── */
+
+@keyframes tl-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(43, 118, 197, 0.18); }
+  50% { box-shadow: 0 0 0 12px rgba(43, 118, 197, 0.06); }
+}
+
+@keyframes tl-pulse-red {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(231, 76, 60, 0.15); }
+  50% { box-shadow: 0 0 0 11px rgba(231, 76, 60, 0.05); }
+}
+
+@keyframes tl-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── My Loans Card View ── */
+
+.my-loan-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 35px rgba(32, 50, 70, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  animation: tl-enter 0.5s ease-out both;
+}
+
+.my-loan-card:hover {
+  box-shadow: 0 14px 44px rgba(32, 50, 70, 0.08);
+  transform: translateY(-2px);
+}
+
+.my-loan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.my-loan-header h3 {
+  margin: 6px 0 0;
+  font-size: 26px;
+  letter-spacing: -1px;
+}
+
+.my-loan-details {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.my-loan-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.my-loan-details small {
+  color: #8d99a5;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.my-loan-details strong {
+  font-size: 15px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Payment progress bar (shown for DISBURSED and CLOSED loans) */
+.payment-progress {
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: #f5f8fa;
+  border-radius: 10px;
+}
+
+.payment-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.payment-progress-header span {
+  color: var(--muted);
+}
+
+.payment-progress-header strong {
+  color: var(--blue);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+}
+
+.payment-progress-bar {
+  height: 8px;
+  background: #e7ebef;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.payment-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.payment-progress-footer {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Button area below the success step timeline */
+.success-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 700px) {
+  .my-loan-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .my-loan-card {
+    padding: 22px 18px;
+  }
+
+  .tl-circle {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .tl-connector {
+    top: 16px;
+  }
+
+  .tl-label {
+    font-size: 10px;
+  }
+
+  .tl-desc {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-loan-header h3 {
+    font-size: 22px;
+  }
+
+  .status-timeline {
+    padding: 20px 14px 16px;
+  }
+}

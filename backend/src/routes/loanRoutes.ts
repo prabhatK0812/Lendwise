@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  loanRoutes.ts — /api/loans/* route definitions + RBAC
+ *
+ *  Every route runs authenticate() first. Role restrictions
+ *  are applied per-endpoint via authorize(...roles) so the
+ *  backend enforces RBAC regardless of frontend behaviour.
+ * ────────────────────────────────────────────────────────────── */
+
 import { Router } from "express";
 import { authenticate, authorize } from "../middleware";
 import { salarySlipUpload } from "../middleware/upload";
@@ -49,6 +57,12 @@ router.post(
   authenticate,
   authorize("Admin", "Collection"),
   controller.payment,
+);
+router.get(
+  "/:id/document",
+  authenticate,
+  authorize("Admin", "Sanction", "Disbursement", "Collection", "Borrower"),
+  controller.getDocument,
 );
 
 export { router as loanRouter };

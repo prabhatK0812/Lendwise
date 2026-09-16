@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  AuthScreen.tsx — Login and signup interface
+ *
+ *  Split-panel layout with branding on the left and a compact
+ *  auth form on the right. Supports toggling between login and
+ *  signup modes. Signup always creates a Borrower account.
+ * ────────────────────────────────────────────────────────────── */
+
 "use client";
 
 import { FormEvent } from "react";

@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  authService.ts — Authentication business logic
+ *
+ *  Handles user registration (Borrower only), password hashing
+ *  with bcrypt (12 salt rounds), login verification, and JWT
+ *  generation. Privileged roles come from the seed script only.
+ * ────────────────────────────────────────────────────────────── */
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../models";

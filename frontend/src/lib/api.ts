@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  api.ts — HTTP client and session management
+ *
+ *  createApiRequest() returns a typed fetch wrapper that injects
+ *  the JWT Bearer token into every request. Session helpers
+ *  persist/restore/clear the token+user pair in localStorage.
+ * ────────────────────────────────────────────────────────────── */
+
 import { ApiRequest } from "../types";
 
 export const API =

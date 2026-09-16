@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  AppShell.tsx — Shared authenticated layout shell
+ *
+ *  Renders the top navigation bar with branding, user identity,
+ *  and a logout button. Wraps both the Borrower Portal and
+ *  the Operations Dashboard to maintain consistent chrome.
+ * ────────────────────────────────────────────────────────────── */
+
 import { User } from "../types";
 
 // AppShell provides the shared authenticated header for borrower and executive workspaces.

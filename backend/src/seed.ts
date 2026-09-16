@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  seed.ts — Idempotent demo account seeder
+ *
+ *  Creates one user per role (Admin, Sales, Sanction, Disbursement,
+ *  Collection, Borrower) with Password@123. Uses findOneAndUpdate
+ *  with upsert so the script is safe to rerun without duplicates.
+ * ────────────────────────────────────────────────────────────── */
+
 import "dotenv/config";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";

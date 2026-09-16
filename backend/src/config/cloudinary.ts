@@ -1,3 +1,11 @@
+/* ──────────────────────────────────────────────────────────────
+ *  cloudinary.ts — Cloudinary SDK configuration + upload helper
+ *
+ *  Primary storage for salary slip documents. Uses raw upload
+ *  type so PDFs are accepted alongside images. If the upload
+ *  fails, callers fall back to storing the binary in MongoDB.
+ * ────────────────────────────────────────────────────────────── */
+
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
 // Cloudinary stores binary documents outside MongoDB; MongoDB keeps only document metadata.

@@ -1,3 +1,12 @@
+/* ──────────────────────────────────────────────────────────────
+ *  loanService.ts — Loan lifecycle business logic
+ *
+ *  Core operations: loan creation with Cloudinary upload,
+ *  role-filtered dashboard queries, status transitions
+ *  (sanction, disburse), and payment recording with auto-close.
+ *  Every transition uses atomic findOneAndUpdate guards.
+ * ────────────────────────────────────────────────────────────── */
+
 import { Loan, User } from "../models";
 import { uploadSalarySlip } from "../config/cloudinary";
 import { calculateLoanMath } from "../validators/loanValidator";
@@ -56,7 +65,9 @@ export async function createLoan(
 }
 
 export async function getBorrowerLoans(borrowerId: string) {
-  return Loan.find({ borrower: borrowerId }).select("-salarySlip.data");
+  return Loan.find({ borrower: borrowerId })
+    .select("-salarySlip.data")
+    .sort({ createdAt: -1 });
 }
 
 export async function getLeads() {
@@ -82,6 +93,7 @@ export async function getDashboardLoans(role: string) {
       // Executives may review document metadata/URL, but binary fallback content is never returned.
       .select("-salarySlip.data")
       .populate("borrower", "name email")
+      .sort({ createdAt: -1 })
   );
 }
 
@@ -134,4 +146,8 @@ export async function recordPayment(
     loan.status = "CLOSED";
   await loan.save();
   return { loan };
+}
+
+export async function getLoanById(id: string) {
+  return Loan.findById(id).populate("borrower", "name email");
 }

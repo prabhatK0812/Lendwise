@@ -1,3 +1,12 @@
+/* ──────────────────────────────────────────────────────────────
+ *  Loan.ts — Mongoose schema for loan applications
+ *
+ *  Stores the full loan lifecycle: borrower details, BRE fields,
+ *  salary slip metadata, financial math (amount, interest, total),
+ *  status enum (APPLIED→SANCTIONED→DISBURSED→CLOSED / REJECTED),
+ *  and embedded payment records with UTR numbers.
+ * ────────────────────────────────────────────────────────────── */
+
 import mongoose, { Document, Schema } from "mongoose";
 import { Role } from "./User";
 

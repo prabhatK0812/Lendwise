@@ -1,3 +1,12 @@
+/* ──────────────────────────────────────────────────────────────
+ *  loanValidator.ts — Business Rule Engine (BRE) + loan math
+ *
+ *  Server-side eligibility rules: age 23–50, salary ≥ ₹25K,
+ *  valid PAN format, not unemployed. Also validates loan terms
+ *  (amount ₹50K–₹5L, tenure 30–365 days) and calculates
+ *  simple interest at 12% p.a. using SI = (P × R × T) / 36500.
+ * ────────────────────────────────────────────────────────────── */
+
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
 export function ageFrom(date: string) {
