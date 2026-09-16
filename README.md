@@ -402,18 +402,6 @@ cd frontend && npx tsc --noEmit        # TypeScript check (frontend)
 
 ---
 
-## Video Submission Checklist (3–5 min)
-
-- [ ] Borrower login / signup
-- [ ] BRE failure demonstration with clear error message
-- [ ] BRE pass, salary slip upload with file preview card, loan sliders, and Submit
-- [ ] Status timeline showing `APPLIED` on borrower dashboard
-- [ ] Sanction login → Open Underwriting Review Modal (`LoanDetailModal`), view PDF salary slip, and Approve
-- [ ] Disbursement login → Release funds
-- [ ] Collection login → Record payment using compact form with UTR and amount → Auto-close
-- [ ] Borrower re-login → My Loans view showing `CLOSED` with 100% progress bar
-- [ ] RBAC check (unauthorized module access blocked)
-
 ---
 
 ## Design Decisions
